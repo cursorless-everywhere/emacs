@@ -31978,6 +31978,10 @@ gui_produce_glyphs (struct it *it)
  	      it->descent = FONT_DESCENT (font) - boff;
  	    }
 
+	  // add extra ascent for characters
+	  // TODO: limit this to only cursorless characters
+	  it->ascent += 6;
+
 	  if (get_char_glyph_code (it->char_to_display, font, &char2b))
 	    {
 	      pcm = get_per_char_metric (font, &char2b);
