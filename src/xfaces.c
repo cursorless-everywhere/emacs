@@ -1230,6 +1230,7 @@ load_color2 (struct frame *f, struct face *face, Lisp_Object name,
 	   || target_index == LFACE_UNDERLINE_INDEX
 	   || target_index == LFACE_OVERLINE_INDEX
 	   || target_index == LFACE_STRIKE_THROUGH_INDEX
+	   || target_index == LFACE_CURSORLESS_INDEX
 	   || target_index == LFACE_BOX_INDEX);
 
   /* if the color map is full, defined_color_hook will return a best match
@@ -1268,6 +1269,11 @@ load_color2 (struct frame *f, struct face *face, Lisp_Object name,
 
 	case LFACE_BOX_INDEX:
 	  face->box_color_defaulted_p = true;
+	  color->pixel = FRAME_FOREGROUND_PIXEL (f);
+	  break;
+
+	case LFACE_CURSORLESS_INDEX:
+	  face->cursorless_color_defaulted_p = true;
 	  color->pixel = FRAME_FOREGROUND_PIXEL (f);
 	  break;
 
@@ -1409,6 +1415,13 @@ free_face_colors (struct frame *f, struct face *face)
       && !face->strike_through_color_defaulted_p)
     {
       x_free_colors (f, &face->strike_through_color, 1);
+      IF_DEBUG (--ncolors_allocated);
+    }
+
+  if (face->cursorless_p
+      && !face->cursorless_color_defaulted_p)
+    {
+      x_free_colors (f, &face->cursorless_color, 1);
       IF_DEBUG (--ncolors_allocated);
     }
 
@@ -1732,6 +1745,7 @@ the WIDTH times as wide as FACE on FRAME.  */)
 #define LFACE_SWIDTH(LFACE)	    AREF ((LFACE), LFACE_SWIDTH_INDEX)
 #define LFACE_OVERLINE(LFACE)	    AREF ((LFACE), LFACE_OVERLINE_INDEX)
 #define LFACE_STRIKE_THROUGH(LFACE) AREF ((LFACE), LFACE_STRIKE_THROUGH_INDEX)
+#define LFACE_CURSORLESS(LFACE)     AREF ((LFACE), LFACE_CURSORLESS_INDEX)
 #define LFACE_BOX(LFACE)	    AREF ((LFACE), LFACE_BOX_INDEX)
 #define LFACE_FONT(LFACE)	    AREF ((LFACE), LFACE_FONT_INDEX)
 #define LFACE_INHERIT(LFACE)	    AREF ((LFACE), LFACE_INHERIT_INDEX)
@@ -1805,6 +1819,10 @@ check_lface_attrs (Lisp_Object attrs[LFACE_VECTOR_SIZE])
 	   || RESET_P (attrs[LFACE_STRIKE_THROUGH_INDEX])
 	   || SYMBOLP (attrs[LFACE_STRIKE_THROUGH_INDEX])
 	   || STRINGP (attrs[LFACE_STRIKE_THROUGH_INDEX]));
+  eassert (UNSPECIFIEDP (attrs[LFACE_CURSORLESS_INDEX])
+	   || IGNORE_DEFFACE_P (attrs[LFACE_CURSORLESS_INDEX])
+	   || SYMBOLP (attrs[LFACE_CURSORLESS_INDEX])
+	   || STRINGP (attrs[LFACE_CURSORLESS_INDEX]));
   eassert (UNSPECIFIEDP (attrs[LFACE_BOX_INDEX])
 	   || IGNORE_DEFFACE_P (attrs[LFACE_BOX_INDEX])
 	   || RESET_P (attrs[LFACE_BOX_INDEX])
@@ -2736,6 +2754,15 @@ merge_face_ref (struct window *w,
 		  else
 		    err = true;
 		}
+	      else if (EQ (keyword, QCcursorless))
+		{
+		  if (EQ (value, Qt)
+		      || NILP (value)
+		      || STRINGP (value))
+		    to[LFACE_CURSORLESS_INDEX] = value;
+		  else
+		    err = true;
+		}
 	      else if (EQ (keyword, QCbox))
 		{
 		  if (EQ (value, Qt))
@@ -3300,6 +3327,21 @@ FRAME 0 means change the face on all frames, and change the default
 
       old_value = LFACE_STRIKE_THROUGH (lface);
       ASET (lface, LFACE_STRIKE_THROUGH_INDEX, value);
+    }
+  else if (EQ (attr, QCcursorless))
+    {
+      if (!UNSPECIFIEDP (value)
+	  && !IGNORE_DEFFACE_P (value))
+	if ((SYMBOLP (value)
+	     && !EQ (value, Qt)
+	     && !NILP (value))
+	    /* cursorless color.  */
+	    || (STRINGP (value)
+		&& SCHARS (value) == 0))
+	  signal_error ("Invalid face cursorless", value);
+
+      old_value = LFACE_CURSORLESS (lface);
+      ASET (lface, LFACE_CURSORLESS_INDEX, value);
     }
   else if (EQ (attr, QCbox))
     {
@@ -3894,6 +3936,7 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
     value = face_boolean_x_resource_value (value, true);
   else if (EQ (attr, QCunderline)
 	   || EQ (attr, QCoverline)
+	   || EQ (attr, QCcursorless)
 	   || EQ (attr, QCstrike_through))
     {
       Lisp_Object boolean_value;
@@ -4097,6 +4140,8 @@ frames).  If FRAME is omitted or nil, use the selected frame.  */)
     value = LFACE_OVERLINE (lface);
   else if (EQ (keyword, QCstrike_through))
     value = LFACE_STRIKE_THROUGH (lface);
+  else if (EQ (keyword, QCcursorless))
+    value = LFACE_CURSORLESS (lface);
   else if (EQ (keyword, QCbox))
     value = LFACE_BOX (lface);
   else if (EQ (keyword, QCinverse_video)
@@ -4143,6 +4188,7 @@ Value is nil if ATTR doesn't have a discrete set of valid values.  */)
 
   if (EQ (attr, QCunderline) || EQ (attr, QCoverline)
       || EQ (attr, QCstrike_through)
+      || EQ (attr, QCcursorless)
       || EQ (attr, QCinverse_video)
       || EQ (attr, QCreverse_video)
       || EQ (attr, QCextend))
@@ -5246,6 +5292,9 @@ gui_supports_face_attributes_p (struct frame *f,
       || (!UNSPECIFIEDP (lattrs[LFACE_STRIKE_THROUGH_INDEX])
 	  && face_attr_equal_p (lattrs[LFACE_STRIKE_THROUGH_INDEX],
 				def_attrs[LFACE_STRIKE_THROUGH_INDEX]))
+      || (!UNSPECIFIEDP (lattrs[LFACE_CURSORLESS_INDEX])
+	  && face_attr_equal_p (lattrs[LFACE_CURSORLESS_INDEX],
+				def_attrs[LFACE_CURSORLESS_INDEX]))
       || (!UNSPECIFIEDP (lattrs[LFACE_BOX_INDEX])
 	  && face_attr_equal_p (lattrs[LFACE_BOX_INDEX],
 				def_attrs[LFACE_BOX_INDEX])))
@@ -5420,6 +5469,14 @@ tty_supports_face_attributes_p (struct frame *f,
 	test_caps |= TTY_CAP_STRIKE_THROUGH;
     }
 
+  val = attrs[LFACE_CURSORLESS_INDEX];
+  if (!UNSPECIFIEDP (val))
+    {
+      if (face_attr_equal_p (val, def_attrs[LFACE_CURSORLESS_INDEX]))
+	return false;		/* same as default */
+      else
+	test_caps |= TTY_CAP_CURSORLESS;
+    }
   /* Color testing.  */
 
   /* Check if foreground color is close enough.  */
@@ -5832,6 +5889,9 @@ realize_default_face (struct frame *f)
   if (UNSPECIFIEDP (LFACE_STRIKE_THROUGH (lface)))
     ASET (lface, LFACE_STRIKE_THROUGH_INDEX, Qnil);
 
+  if (UNSPECIFIEDP (LFACE_CURSORLESS (lface)))
+    ASET (lface, LFACE_CURSORLESS_INDEX, Qnil);
+
   if (UNSPECIFIEDP (LFACE_BOX (lface)))
     ASET (lface, LFACE_BOX_INDEX, Qnil);
 
@@ -6047,7 +6107,7 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
 #ifdef HAVE_WINDOW_SYSTEM
   struct face *default_face;
   struct frame *f;
-  Lisp_Object stipple, underline, overline, strike_through, box;
+  Lisp_Object stipple, underline, overline, strike_through, box, cursorless;
 
   eassert (FRAME_WINDOW_P (cache->f));
 
@@ -6343,6 +6403,21 @@ realize_gui_face (struct face_cache *cache, Lisp_Object attrs[LFACE_VECTOR_SIZE]
       face->overline_color = face->foreground;
       face->overline_color_defaulted_p = true;
       face->overline_p = true;
+    }
+
+  cursorless = attrs[LFACE_CURSORLESS_INDEX];
+  if (STRINGP (cursorless))
+    {
+      face->cursorless_color
+	= load_color (f, face, attrs[LFACE_CURSORLESS_INDEX],
+		      LFACE_CURSORLESS_INDEX);
+      face->cursorless_p = true;
+    }
+  else if (EQ (cursorless, Qt))
+    {
+      face->cursorless_color = face->foreground;
+      face->cursorless_color_defaulted_p = true;
+      face->cursorless_p = true;
     }
 
   strike_through = attrs[LFACE_STRIKE_THROUGH_INDEX];
@@ -7111,6 +7186,7 @@ init_xfaces (void)
   face_attr_sym[LFACE_STIPPLE_INDEX] = QCstipple;
   face_attr_sym[LFACE_OVERLINE_INDEX] = QCoverline;
   face_attr_sym[LFACE_STRIKE_THROUGH_INDEX] = QCstrike_through;
+  face_attr_sym[LFACE_CURSORLESS_INDEX] = QCcursorless;
   face_attr_sym[LFACE_BOX_INDEX] = QCbox;
   face_attr_sym[LFACE_FONT_INDEX] = QCfont;
   face_attr_sym[LFACE_INHERIT_INDEX] = QCinherit;
@@ -7154,6 +7230,7 @@ syms_of_xfaces (void)
   DEFSYM (QCitalic, ":italic");
   DEFSYM (QCoverline, ":overline");
   DEFSYM (QCstrike_through, ":strike-through");
+  DEFSYM (QCcursorless, ":cursorless");
   DEFSYM (QCbox, ":box");
   DEFSYM (QCinherit, ":inherit");
   DEFSYM (QCextend, ":extend");

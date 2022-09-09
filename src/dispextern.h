@@ -1622,6 +1622,7 @@ enum lface_attribute_index
   LFACE_STIPPLE_INDEX,
   LFACE_OVERLINE_INDEX,
   LFACE_STRIKE_THROUGH_INDEX,
+  LFACE_CURSORLESS_INDEX,
   LFACE_BOX_INDEX,
   LFACE_FONT_INDEX,
   LFACE_INHERIT_INDEX,
@@ -1702,6 +1703,7 @@ struct face
   unsigned long underline_color;
   unsigned long overline_color;
   unsigned long strike_through_color;
+  unsigned long cursorless_color;
   unsigned long box_color;
 
   struct font *font;
@@ -1747,6 +1749,7 @@ struct face
      strike-through or have a box drawn around it.  */
   bool_bf overline_p : 1;
   bool_bf strike_through_p : 1;
+  bool_bf cursorless_p : 1;
 
   /* True means that the colors specified for this face could not be
      loaded, and were replaced by default colors, so they shouldn't be
@@ -1760,6 +1763,7 @@ struct face
   bool_bf underline_defaulted_p : 1;
   bool_bf overline_color_defaulted_p : 1;
   bool_bf strike_through_color_defaulted_p : 1;
+  bool_bf cursorless_color_defaulted_p : 1;
   bool_bf box_color_defaulted_p : 1;
 
   /* True means the underline should be drawn at the descent line.  */
@@ -3360,6 +3364,7 @@ enum tool_bar_item_image
 #define TTY_CAP_DIM		0x08
 #define TTY_CAP_ITALIC  	0x10
 #define TTY_CAP_STRIKE_THROUGH	0x20
+#define TTY_CAP_CURSORLESS      0x30
 
 
 /***********************************************************************
