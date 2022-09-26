@@ -1292,11 +1292,11 @@ load_color2 (struct frame *f, struct face *face, Lisp_Object name,
 /* Load color with name NAME for use by face FACE on frame F.
    TARGET_INDEX must be one of LFACE_FOREGROUND_INDEX,
    LFACE_BACKGROUND_INDEX, LFACE_UNDERLINE_INDEX, LFACE_OVERLINE_INDEX,
-   LFACE_STRIKE_THROUGH_INDEX, or LFACE_BOX_INDEX.  Value is the
-   pixel color.  If color cannot be loaded, display a message, and
-   return the foreground, background or underline color of F, but
-   record that fact in flags of the face so that we don't try to free
-   these colors.  */
+   LFACE_STRIKE_THROUGH_INDEX, LFACE_CURSORLESS_INDEX, or
+   LFACE_BOX_INDEX.  Value is the pixel color.  If color cannot be
+   loaded, display a message, and return the foreground, background or
+   underline color of F, but record that fact in flags of the face so
+   that we don't try to free these colors.  */
 
 unsigned long
 load_color (struct frame *f, struct face *face, Lisp_Object name,
