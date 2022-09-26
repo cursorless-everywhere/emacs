@@ -5395,7 +5395,8 @@ tty_supports_face_attributes_p (struct frame *f,
       || !UNSPECIFIEDP (attrs[LFACE_HEIGHT_INDEX])
       || !UNSPECIFIEDP (attrs[LFACE_SWIDTH_INDEX])
       || !UNSPECIFIEDP (attrs[LFACE_OVERLINE_INDEX])
-      || !UNSPECIFIEDP (attrs[LFACE_BOX_INDEX]))
+      || !UNSPECIFIEDP (attrs[LFACE_BOX_INDEX])
+      || !UNSPECIFIEDP (attrs[LFACE_CURSORLESS_INDEX]))
     return false;
 
   /* Test for terminal `capabilities' (non-color character attributes).  */
@@ -5467,15 +5468,6 @@ tty_supports_face_attributes_p (struct frame *f,
 	return false;		/* same as default */
       else
 	test_caps |= TTY_CAP_STRIKE_THROUGH;
-    }
-
-  val = attrs[LFACE_CURSORLESS_INDEX];
-  if (!UNSPECIFIEDP (val))
-    {
-      if (face_attr_equal_p (val, def_attrs[LFACE_CURSORLESS_INDEX]))
-	return false;		/* same as default */
-      else
-	test_caps |= TTY_CAP_CURSORLESS;
     }
   /* Color testing.  */
 
