@@ -3364,7 +3364,7 @@ enum tool_bar_item_image
 #define TTY_CAP_DIM		0x08
 #define TTY_CAP_ITALIC  	0x10
 #define TTY_CAP_STRIKE_THROUGH	0x20
-#define TTY_CAP_CURSORLESS      0x30
+#define TTY_CAP_CURSORLESS      0x40
 
 
 /***********************************************************************
