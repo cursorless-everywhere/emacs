@@ -1746,7 +1746,7 @@ struct face
   bool_bf use_box_color_for_shadows_p : 1;
 
   /* Non-zero if text in this face should be underlined, overlined,
-     strike-through or have a box drawn around it.  */
+     strike-through or have a cursorless hat on it.  */
   bool_bf overline_p : 1;
   bool_bf strike_through_p : 1;
   bool_bf cursorless_p : 1;

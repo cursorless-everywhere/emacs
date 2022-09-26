@@ -10808,7 +10808,7 @@ x_draw_glyph_string (struct glyph_string *s)
 	}
 
 
-      // draw hats
+      /* Draw cursorless hats */
       if (s->face->cursorless_p)
         {
           int glyph_y = s->ybase - s->first_glyph->ascent;
