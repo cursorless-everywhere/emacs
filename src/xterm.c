@@ -6301,12 +6301,12 @@ x_fill_circle (struct frame *f, GC gc, int x, int y, int width, int height)
   cr = x_begin_cr_clip (f, gc);
   XGetGCValues (dpy, gc, GCFillStyle | GCStipple, &xgcv);
   // ignore stippling
-  x_set_cr_source_with_gc_foreground (f, gc);
+  x_set_cr_source_with_gc_foreground (f, gc, false);
 
 
   // radius configurable, y configurable as distance from top? or percentage of
   // glyph height? space between char and hat?
-  cairo_arc(cr, x + (width / 2), y, 2.8, 0, 2.0 * M_PI);
+  cairo_arc(cr, x + (width / 2), y, 2.5, 0, 2.0 * M_PI);
   cairo_fill (cr);
 
   x_end_cr_clip (f);
@@ -10820,7 +10820,7 @@ x_draw_glyph_string (struct glyph_string *s)
           if (s->face->cursorless_color_defaulted_p)
             {
               x_fill_circle (s->f, s->gc, s->x, s->y,
-                             s->width, h);
+                             s->background_width, h);
             }
           else
             {
@@ -10831,7 +10831,7 @@ x_draw_glyph_string (struct glyph_string *s)
               XSetForeground (display, s->gc,
                               s->face->cursorless_color);
               x_fill_circle (s->f, s->gc, s->x, glyph_y + dy,
-                             s->width, h);
+                             s->background_width, h);
               XSetForeground (display, s->gc, xgcv.foreground);
             }
         }
