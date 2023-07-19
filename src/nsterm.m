@@ -3419,6 +3419,17 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
       NSRectFill (r);
     }
 
+  if (face->cursorless_p)
+    {
+    // draw circle with NS and fill it with background color
+    NSPoint center = NSMakePoint(x + (width / 2), s->y + (s->height * .1));
+    CGFloat radius = 2.5;
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    [path appendBezierPathWithArcWithCenter:center radius:radius startAngle:0 endAngle:360];
+    [[NSColor colorWithUnsignedLong:face->cursorless_color] set];
+    [path fill];
+    }
+
   /* Do strike-through.  We follow other terms for thickness and
      vertical position.  */
   if (face->strike_through_p)
@@ -3461,7 +3472,7 @@ ns_draw_box (NSRect r, CGFloat hthickness, CGFloat vthickness,
   s.size.height = hthickness;
   NSRectFill (s);
   s.origin.y += r.size.height - hthickness;
-  NSRectFill (s);
+  //  NSRectFill (s);
 
   s.size.height = r.size.height;
   s.origin.y = r.origin.y;
@@ -10730,6 +10741,7 @@ ns_new_font (struct frame *f, Lisp_Object font_object, int fontset)
   FRAME_BASELINE_OFFSET (f) = font->baseline_offset;
   FRAME_COLUMN_WIDTH (f) = font->average_width;
   get_font_ascent_descent (font, &font_ascent, &font_descent);
+  font_ascent += 6;
   FRAME_LINE_HEIGHT (f) = font_ascent + font_descent;
 
   /* Compute the scroll bar width in character columns.  */
